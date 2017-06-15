@@ -1,0 +1,273 @@
+README for pathrate-2.4.1
+
+Contents
+--------
+Overview of pathrate
+How pathrate works
+Building pathrate
+Running pathrate
+Examples
+Changes from previous pathrate release
+Contact and other info
+
+
+Overview of pathrate
+--------------------
+pathrate measures the capacity of a network path from host S (sender) to host R
+(receiver). The capacity of a path, aka bottleneck bandwidth, is the maximum
+IP-layer throughput that a flow can get in the path from S to R. The capacity
+does not depend on the load of the path. 
+
+* The capacity of a path is not the same metric as the available bandwidth
+of a path. The later takes into account the cross traffic load in the path, and
+it is less than the capacity. Also, the capacity is different than the Bulk
+Transfer Capacity (BTC) metric, currently standardized by the IETF. The BTC is
+the maximum throughput that a TCP connection can get in the path, when it is
+only limited by the network.
+
+* pathrate requires that you have access at both end-points of the 
+network path (i.e., you have to be able to run pathrate at both S and R).  This
+makes the tool harder to use, but it is the only way to avoid distorting the
+measurements with the reverse path from R to S. 
+
+* You can run pathrate from user-space, and you don't need any superuser 
+privileges.
+
+* Pathrate takes normally about 15 minutes to run. Even though we could
+simplify the measurement process so that it takes much shorter, we chose to
+focus on accuracy rather than on execution speed.  Notice that the capacity of
+a path is a static metric that does not change unless if there are routing or
+infrastructure changes in the path.  Consequently, the long execution time of
+pathrate should not be a concern. 
+
+* It is important to run pathrate from relatively idle hosts. Before 
+running pathrate, make sure that there are no other CPU or I/O intensive
+processes running. If there are, it is likely that they will interact with
+pathrate's user-level packet timestamping, and the results that you'll get may
+be quite inaccurate.
+
+* Certain links use load balancing (e.g., Cisco's standard CEF load-sharing). 
+In those cases, even though a certain "fat link" may have a capacity X, an IP
+flow will only be able to see a maximum bandwidth of X/n, where n is the number
+of "sub-links" (e.g., ATM PVCs) that make up the "fat link". 
+
+* In paths that are limited by Gigabit Ethernet interfaces,
+the Pathrate final capacity estimate is often less than 1000Mbps. The major
+issue there is whether the two end-hosts can truly saturate a Gigabit Ethernet
+path, even when they transfer MTU UDP packets.  We have observed that in order
+to saturate a GigE interface, it is important that end-hosts have a 64-bit PCI
+bus (together with a GHz processor and a decent GigE NIC of course).  In other
+words, Pathrate cannot measure a nominal network capacity if the end-hosts are
+not really able to use that capacity.
+
+* Some links perform traffic shaping, providing a certain
+peak rate P, while if the burst size is larger than a certain amount of bytes,
+the maximum rate is reduced to a lower ("sustainable") rate S. In such paths,
+Pathrate should measure P, not S.  Thanks to Tom Dunigan from ORNL that run
+Pathrate in such paths and gave us feedback.
+
+* In previous versions, Pathrate would sometimes report that it
+cannot produce a final capacity estimate (especially, in      high-bandwidth
+paths). In the new version, Pathrate will report instead a lower-bound on the
+capacity of a path. 
+
+* Internet paths are often asymmetric. The capacity of the path from S to R 
+is not necessarily the same with the capacity of the path from R to S.
+
+* For heavily loaded paths, pathrate can take a while until it reports a 
+final estimate. "A while" means about half an hour. The good news is that the
+capacity of a path does not change very often, unless if there is route
+flapping. 
+
+* pathrate uses UDP packets for probing the path's bandwidth, and it also 
+establishes a TCP connection between the two hosts for control purposes.  The
+UDP port number is 48698 (at the receiver) and the TCP port number is 48699 (at
+the sender).
+
+* pathrate does some primitive form of congestion avoidance (it will abort
+after many packet losses).
+
+* pathrate assumes that the IP and UDP headers (28 bytes totally) are
+fully transmitted together with the packet payload. For links that do header
+compression (RFC 1144) this will cause a slight capacity overestimation.  
+ 
+* pathrate v2.x is significantly different than the first version, released 
+in November 2000. Also, pathrate v2.x differs in certain points with the
+description given in our Infocom 2001 paper.
+
+
+
+How pathrate works
+------------------
+Pathrate consists of the following "run phases":
+
+1) Initially, the tool discovers the maximum train-length that the path can
+carry. The idea is that we do not want to overload the path with very long
+packet trains that would cause buffer overflows. The maximum train length that
+we try is 50 packets. We stop increasing the train length after three lossy
+packet trains at a given train length.
+
+2) Then, pathrate sends a number of packet trains of increasing length (called
+"preliminary measurements" phase). The goal here is to detect if the narrow
+link has parallel sub-channels, or if it performs traffic shaping. You can
+ignore this phase until you become an "advanced user". This phase also checks
+whether the path is "easy to measure" (very lightly loaded). In that case,
+pathrate reports its final estimate and exits. An important part of this phase
+is that pathrate computes the "bandwidth resolution" (think of it as a
+histogram bin width). The final capacity estimate will be a range of this
+width.
+
+3) In this phase, called Phase I, pathrate generates a large number (1000) of
+packet-pairs. The goal here is to discover all local modes in the packet-pair
+bandwidth distribution. One of the Phase I modes is expected to be the capacity
+of the path. The packets that pathrate sends in Phase I are of variable size,
+in order to make the non-capacity local modes weaker and wider. 
+
+4) Finally, in Phase II, pathrate generates a number (500) of packet trains of
+large length. The goal here is to discover which of the Phase I local modes is
+the capacity of the path. To do so, Phase II estimates the Asymptotic
+Dispersion Rate (ADR) metric R, measured from the dispersion of long packet
+trains. We know (see our Infocom 2001 paper) that the capacity is larger than
+R. If there are several Phase I modes that are larger than R, the capacity
+estimate is the mode that maximizes a certain "figure of merit" M. M depends on
+the "narrowness" and the "strength" of each candidate mode in the underlying
+bandwidth distribution of Phase I. The capacity mode should be narrow and
+strong, i.e., to have a large value of M. 
+
+The very final outcome of pathrate is the capacity estimate for the path. 
+
+
+
+
+Building pathrate
+-----------------
+pathrate uses the standard configure/make approach.
+$> ./configure
+$> make
+
+After you have extracted the pathrate code in a directory,
+run configure in that directory. Then run make.
+
+You should then have two executables in the pathrate directory.
+1. pathrate_snd (to be run at the sender)
+2. pathrate_rcv (to be run at the receiver)
+
+
+
+Running pathrate
+----------------
+
+sender 
+   For capacity estimation, first run pathrate_snd at the sender S:
+   $> pathrate_snd
+   By default, pathrate_snd will exit after 1 measurement.
+   Use switch -i to run sender in iterative mode.
+   Other options are,
+        -q        : quite mode
+        -v        : verbose mode
+        -o <file> : print log in user specified file
+        -H|-h     : print help and exit                                                                                       
+
+receiver 
+   Then, run pathrate_rcv at the receiver R:
+   $> pathrate_rcv [-q|-v] [-Q] [-o|-O <filename>] [-N <filename>] [-H] -h <sender>
+        -s        : hostname/ipaddress of sender
+        -q        : quite mode
+        -v        : verbose mode
+        -Q        : Quick termination mode
+        -o <file> : print log in user specified file
+        -O <file> : append log in user specified file [default is pathrate.output]
+        -N <file> : print output in ULM format to <file>
+        -H|-h     : print help and exit
+      
+   [-o,-O] By default, receiver always appends detailed output to file 
+   "pathrate.output". output file can be changed by specifying a filename with -o 
+    switch. Remember, if the specified file already exits, it will be over-written.
+    To append the output to a file use -O switch.
+   
+   [-q,-v] By default, receiver sends minimal output (Progress report, Local 
+   modes and final output) to terminal (stdout). To completely disable any 
+   message on stdout, please use -q (quite mode).
+   To enable detailed output on screen, use -v (Verbose mode). Note that, log file 
+   (user specified or "pathrate.output") contains exactly the same output as -v.
+   
+   [-N] Specify a file name to store output in netlogger compatible format.
+
+   [-Q] If used, terminates at the end of phase 0 and give rough estimate of
+   capacity by getting the average of the estimates so far. It also reports
+   the coefficient of variation (standard deviation/ average). If this variation
+   is large, complete run of pathrate is suggested for more accurate capacity
+   estimate.
+
+
+
+Examples
+--------
+Say, you want to measure the capacity from host A to host B, then run 
+pathrate_snd at A and pathrate_rcv at B.
+
+At host A,
+$> ./pathrate_snd -i -q &
+
+At host B,
+$> ./pathrate_rcv -s A 
+
+Now, if you wanted to change the default log file at receiver B,
+$> ./pathrate_rcv -s A -o testrun.log
+
+Next if you also wanted detailed output on screen and netlogger
+output, 
+$> ./pathrate_rcv -s A -o testrun.log -N netlogger.log -v
+
+
+Changes from previous pathrate release
+--------------------------------------
+1) A command line options are added for users to choose different levels 
+   of verbose output on the screen. It also has options for redirecting
+   output to different files and appending to file instead of 
+   overwriting.
+
+2) Current version has been tested to work at high capacity paths.
+   (OC-3, OC-12, Gigabit). It can detect interrupt coalescing at
+   Gigabit NICs and adopt different methodology for capacity 
+   estimation.
+
+3) It can report final estimation in Universal Logger Message (ULM)
+   format.
+
+Authors
+-------
+1. Constantinos Dovrolis
+   dovrolis@cis.udel.edu
+2. Ravi S Prasad 
+   ravi@cc.gatech.edu
+
+
+Important Disclaimer
+--------------------
+pathrate is based on statistical techniques, and so there is no guarantee that
+it will always estimate the correct capacity value. If you get wrong results, 
+please let us know, including also the corresponding <pathrate.output> file.
+
+Please report any problems or suggestions to dovrolis@cc.gatech.edu and 
+ravi@cc.gatech.edu. Also, please let us know if you want to receive email 
+announcements about future pathrate releases. 
+
+
+Acknowledgments
+---------------
+This work was supported by the SciDAC program of the US Department 
+of Energy (award # DE-FC02-01ER25467).
+
+
+References 
+----------
+  "What do packet dispersion techniques measure?",
+      C. Dovrolis, P. Ramanathan, D.Moore, 
+      Proceedings of IEEE Infocom 2001 
+      http://www.cc.gatech.edu/~dovrolis/Papers/infocom01.ps
+and
+  "Packet dispersion techniques and capacity estimation",
+      C. Dovrolis, P. Ramanathan, D.Moore,
+            submitted for publication, 
+            http://www.cc.gatech.edu/~dovrolis/Papers/ton_dispersion.ps

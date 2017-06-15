@@ -1,0 +1,136 @@
+Changes in 2.4.1 (Jan 2005)
+---------------------------
+* Modified the sender receiver interaction during retransmission 
+  of a lost train. Now receiver sends SEND signal retransmission
+  also instead of sender retransmitting in response to NEG_ACK
+
+* Added some debug messages that can be activated by adding -DDEBUG in 
+  the makefile
+
+Changes in 2.4.0 (Apr 2004)
+---------------------------
+* Sender - receiver interaction
+  Receiver requests each train and sends ACK or negative ACK.
+  Now the receiver will not work with older version of the sender.
+* Interrupt coalescence changes
+  Detects IC and uses alternate algorithm (Published in PAM '04).
+* Minor bug fixes
+  - Corrected option (-o <file>) implementation in both sender and receiver
+
+Changes in 2.3.3 (Jan 2004)
+---------------------------
+* Report ADR as capacity mode only when there is no mode larger than ADR
+  (Sometimes ADR mode is narrow even when there exist correct caapcity mode.)
+
+* Bug fixes.
+  - Changed exit condition in recv_train function from 
+      while ((pack_id<train_len )
+    to while ((exp_pack_id<=train_len ); was affecting results in lossy networks.
+  - Frees most of the memory allocation now.
+  - Slightly modified interrupt coalesence detection.
+  - Few print anamolies in gigabit test function.
+
+Changes in 2.3.2 (Jun 2003)
+---------------------------
+Weiling's changes 2:
+* kurtosis instead of ratio of mode_cnt and bell_cnt is used as the narrowness of the bell
+  to calculate figure of merit.
+* BIN_NOISE_TOLER is modified to be proportional to previous bin_cnt
+  instead of a constant.
+
+Changes in 2.3.1 (May 2003)
+---------------------------
+Weiling's changes 1:
+* bin_wd is increased to be twice of the value used earlier
+* bell_cnt and index are updated without the previously required condition that
+  bin has significant number of measurements.
+
+Changes in 2.3.0 (April 2003):
+-----------------------------
+* Tested on high capacity paths. (OC-3, OC-12 and Gigabit paths)
+
+* Detects interrupt coalescing. If detected, uses long trains to 
+  estimate capacity. (tested on Intel Pro 1000 Gigabit controlor
+  82540)
+
+* added command line options to
+  - suppress output (-q)
+  - get more verbose output (-v)
+  - get quick estimate (-Q)
+  - write/append output to a file (-o/O)
+  - append final outoput in ULM format to a file (-N)
+
+* Receiver uses different thread for control messages while getting probing
+  packets in main thread. Don't use select anymore.
+
+* recv_train function return array of packet arrival times.
+  
+* Sender performs sleep time check before waiting for connection
+  from the reciever. Once per sender run, instead of once per connection.
+
+* Abort phase 1 when train length > MAX(max_train_len/4,2)
+        rather than when > MIN(max_train_len, 12)
+
+* Fixed the number of pack sizes (to 40) rather than the increament in 
+        the packet size (was 25B)
+
+* Fixed small printing bugs
+
+Changes in 2.2.1 (April 2002): 
+------------------------------
+* limit max train length in PHASE I.
+  -  Aborts Phase I 
+     when train length > 12. // It's packet-train now and give ADR measurement.
+
+* Dealing with ignored msrments in Phase I changed to:
+	Recv pairs/trains in blocks of 27
+	At the end of each "block", 
+	   if #of ignored msrments > IGNORED_LIM*27
+		train_len+=1;
+		pack_sz+=200
+
+  ---- fixed small printing bugs.
+  ---- Previous version was printing wrong packet sizes.
+
+To-do list :
+*) Find a "correct" threshold factor for ignoring msrments.	
+*) Find a better binwd
+
+
+Changes in 2.2.0 (April 2002): 
+------------------------------
+* select timeout made compatible with Linux 		  	| in _snd.c
+* Sender sends abort signal to rcvr to end measurements 
+	if it sees too many losses     				| in _snd.c
+* Use select in recv_train routine on both the 
+	data and control sockets.				| in _rcv.c
+* Check TCP socket in recv_train if no data in UDP socket
+	Presently and data on TCP socket while expecting a 
+	probing packet implies an abort message.		| in _rcv.c
+* If(No Phase I mode > ADR && Phase II != unimodal) 
+	Then capacity = max_merit(Phase II modes)		| in _rcv.c
+* Pathoverflow => go back to prev-train-length && don't change
+			train spacing				| in _rcv.c
+* Dealing with ignored msrments in Phase I:
+	Recv pairs/trains in blocks of 27
+	At the end of each "block", 
+	   if #of ignored msrments > IGNORED_LIM*27
+		train_len+=2;
+		pack_sz+=200
+	   If train_len > max_train_len	
+		train_len=maxtrain_len				| in _rcv.c
+* No such measures in Phase II.
+* New bin width :
+   - 	based on max-min (after removing 10% outliers) 
+	instead of ave. 					
+   -	Simpler fraction of bw_range				| in _rcv.c
+* Preliminary measurements 
+   - # of outliers is fraction of measured 			| in _rcv.c
+* messages :
+   - Show "time" remaining to complete.
+
+
+To-do list :
+*) Find a "correct" threshold factor for ignoring msrments.	
+*) Find a better binwd
+
