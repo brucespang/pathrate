@@ -20,10 +20,10 @@
    pathrate : an end-to-end capcity estimation tool
    Author   : Constantinos Dovrolis (dovrolis@cc.gatech.edu )
               Ravi S Prasad            ( ravi@cc.gatech.edu )
-              
+
    Release  : Ver 2.4.1
    Support  : This work was supported by the SciDAC
-              program of the US department 
+              program of the US department
 --------------------------------------------------*/
 
 
@@ -75,7 +75,7 @@ void prntmsg(FILE *fp) {
 /*
   Send a message through the control stream
 */
-void send_ctr_msg(long ctr_code) 
+void send_ctr_msg(long ctr_code)
 {
   char ctr_buff[24];
   long ctr_code_n = htonl(ctr_code);
@@ -106,7 +106,7 @@ long recv_ctr_msg(int ctr_strm, char *ctr_buff)
 /*
   Print a bandwidth measurement (given in Mbps) in the appropriate units
 */
-void print_bw(FILE *fp, double bw_v) 
+void print_bw(FILE *fp, double bw_v)
 {
   if (bw_v < 1.0) {
     sprintf(message," %.0f kbps ", bw_v*1000);prntmsg(fp);
@@ -114,14 +114,14 @@ void print_bw(FILE *fp, double bw_v)
   else if (bw_v < 15.0) {
     sprintf(message," %.1f Mbps ", bw_v);prntmsg(fp);
   }
-  else {   
+  else {
     sprintf(message," %.0f Mbps ", bw_v);prntmsg(fp);
   }
 }
 
 
-/* 
-   Terminate measurements  
+/*
+   Terminate measurements
 */
 void termint(int exit_code) {
   int ctr_code;
@@ -140,9 +140,9 @@ void happy_end(double bw_lo, double bw_hi)
   sprintf(message,"\n\n-------------------------------------------------\n");
   prntmsg(pathrate_fp);
   sprintf(message,"Final capacity estimate : ");prntmsg(pathrate_fp);
-  print_bw(pathrate_fp, bw_lo); 
-  sprintf(message," to ");prntmsg(pathrate_fp); 
-  print_bw(pathrate_fp, bw_hi); 
+  print_bw(pathrate_fp, bw_lo);
+  sprintf(message," to ");prntmsg(pathrate_fp);
+  print_bw(pathrate_fp, bw_hi);
   sprintf(message,"\n");prntmsg(pathrate_fp);
   sprintf(message,"-------------------------------------------------\n\n");
   prntmsg(pathrate_fp);
@@ -205,7 +205,7 @@ void print_time(FILE *fp, int time)
   Compute the time difference in microseconds
   between two timeval measurements
 */
-double time_to_us_delta(struct timeval tv1, struct timeval tv2) 
+double time_to_us_delta(struct timeval tv1, struct timeval tv2)
 {
    double time_us;
    time_us = (double)
@@ -213,22 +213,22 @@ double time_to_us_delta(struct timeval tv1, struct timeval tv2)
    return time_us;
 }
 
-void time_copy(struct timeval time_val_old, struct timeval *time_val_new) 
+void time_copy(struct timeval time_val_old, struct timeval *time_val_new)
 {
    (*time_val_new).tv_sec =time_val_old.tv_sec;
    (*time_val_new).tv_usec=time_val_old.tv_usec;
 }
 
 
-/* 
-  Order an array of doubles using bubblesort 
+/*
+  Order an array of doubles using bubblesort
 */
 void order(double unord_arr[], double ord_arr[], long no_elems)
 {
   long i,j;
   double temp;
   for (i=0; i<no_elems; i++) ord_arr[i]=unord_arr[i];
-  for (i=1; i<no_elems; i++) 
+  for (i=1; i<no_elems; i++)
     for (j=i-1; j>=0; j--) {
       if (ord_arr[j+1]<ord_arr[j]) {
          temp=ord_arr[j]; ord_arr[j]=ord_arr[j+1]; ord_arr[j+1]=temp;
@@ -245,7 +245,7 @@ double get_avg(double data[], long no_values)
 {
    long i;
    double sum_;
-   sum_ = 0; 
+   sum_ = 0;
    for (i=0; i<no_values; i++) sum_ += data[i];
    return (sum_ / (double)no_values);
 }
@@ -268,47 +268,47 @@ double get_std(double data[], long no_values)
 
 /*
   Detect a local mode in the set of measurements <ord_data>.
-  Take into account only the valid (unmarked) measurements (vld_data[i]=1). 
-  The bin width of the local mode detection process is <bin_wd>. 
+  Take into account only the valid (unmarked) measurements (vld_data[i]=1).
+  The bin width of the local mode detection process is <bin_wd>.
   The set has <no_values> elements, and it is ordered in increasing sequence.
   The function returns the center value of the modal bin.
   Also, the following call-by-ref arguments return:
     mode_cnt:    # of measurements in modal bin
-    bell_cnt:    # of measurements in entire mode   
+    bell_cnt:    # of measurements in entire mode
              (modal bin+surrounding bins of the same `bell')
     bell_lo:     low bandwidth threshold of modal `bell'
     bell_hi:     high bandwidth threshold of modal `bell'
-*/ 
-double get_mode(double ord_data[], short vld_data[], 
+*/
+double get_mode(double ord_data[], short vld_data[],
     double bin_wd, int no_values, mode_struct *curr_mode)
 {
-  int 
-    i, j, done, tmp_cnt, 
+  int
+    i, j, done, tmp_cnt,
     mode_lo_ind, mode_hi_ind, bell_lo_ind, bell_hi_ind,
-    bin_cnt,  bin_lo_ind,  bin_hi_ind,  
+    bin_cnt,  bin_lo_ind,  bin_hi_ind,
     lbin_cnt, lbin_lo_ind=0, lbin_hi_ind=0,  /* left bin */
     rbin_cnt, rbin_lo_ind=0, rbin_hi_ind=0;  /* right bin */
   double
     mode_lo, mode_hi, bin_lo,  bin_hi;
   /*Weiling: bin_toler, used as */
   double bin_cnt_toler;
-  
+
 
   /* Check if all measurements have been already marked */
   j=0;
   for (i=0; i<no_values; i++) j+=vld_data[i];
   if (j==0) return LAST_MODE; /* no more modes */
-  #ifdef MODES 
+  #ifdef MODES
     printf("\n%d valid measurements\n", j);
   #endif
   /* Initialize mode struct */
-  curr_mode->mode_cnt=0; 
-  curr_mode->bell_cnt=0; 
-  curr_mode->bell_lo=0; 
-  curr_mode->bell_hi=0; 
+  curr_mode->mode_cnt=0;
+  curr_mode->bell_cnt=0;
+  curr_mode->bell_lo=0;
+  curr_mode->bell_hi=0;
 
-  /* 
-    Find the bin of the primary mode from non-marked values 
+  /*
+    Find the bin of the primary mode from non-marked values
   */
 
   /* Find window of length bin_wd with maximum number of consecutive values */
@@ -329,7 +329,7 @@ double get_mode(double ord_data[], short vld_data[],
   curr_mode->mode_cnt  = tmp_cnt;
   mode_lo   = ord_data[mode_lo_ind];
   mode_hi   = ord_data[mode_hi_ind];
-  #ifdef MODES 
+  #ifdef MODES
     printf("Central mode bin from %.3f to %.3f (%d msrms)", mode_lo, mode_hi, *mode_cnt);
     printf(" - (%d-%d)\n", mode_lo_ind, mode_hi_ind);
   #endif
@@ -339,7 +339,7 @@ double get_mode(double ord_data[], short vld_data[],
   curr_mode->bell_hi  = mode_hi;
   bell_lo_ind     = mode_lo_ind;
   bell_hi_ind     = mode_hi_ind;
-  
+
   /*
         Find all the bins at the *left* of the central bin that are part of the
         same mode's bell. Stop when another local mode is detected.
@@ -349,14 +349,14 @@ double get_mode(double ord_data[], short vld_data[],
   bin_hi_ind =  mode_hi_ind;
   bin_lo     =  mode_lo;
   bin_hi     =  mode_hi;
-  
-    /* Weiling:  noise tolerance is determined by bin_cnt_toler, and it's 
+
+    /* Weiling:  noise tolerance is determined by bin_cnt_toler, and it's
      * proportional to previous bin_cnt instead of constant BIN_NOISE_TOLER . */
 
   done=0;
   bin_cnt_toler = BIN_CNT_TOLER_kernel_percent * (bin_cnt);
   do {
-      /* find window of measurements left of the leftmost modal bin with 
+      /* find window of measurements left of the leftmost modal bin with
        (at most) bin_wd width and with the maximum number of measurements */
     lbin_cnt=0;
     if (bin_lo_ind>0) {
@@ -373,16 +373,16 @@ double get_mode(double ord_data[], short vld_data[],
         }
       }
     }
-    #ifdef MODES 
+    #ifdef MODES
          printf("Left bin: %.3f to %.3f", ord_data[lbin_lo_ind], ord_data[lbin_hi_ind]);
          printf(" (%d msrms)", lbin_cnt);
          printf(" - (%d-%d)", lbin_lo_ind, lbin_hi_ind);
     #endif
-  
+
     if (lbin_cnt>0) {
       if (lbin_cnt < bin_cnt+bin_cnt_toler) {
          /* the bin is inside the modal bell */
-        #ifdef MODES 
+        #ifdef MODES
           printf(" - Inside mode");
         #endif
 
@@ -396,7 +396,7 @@ double get_mode(double ord_data[], short vld_data[],
         curr_mode->bell_cnt += bin_lo_ind-lbin_lo_ind;
         curr_mode->bell_lo   = ord_data[lbin_lo_ind];
         bell_lo_ind = lbin_lo_ind;
-  
+
         /* reset bin counters for next iteration */
         bin_cnt     = lbin_cnt;
         bin_lo_ind  = lbin_lo_ind;
@@ -404,18 +404,18 @@ double get_mode(double ord_data[], short vld_data[],
         bin_lo      = ord_data[lbin_lo_ind];
         bin_hi      = ord_data[lbin_hi_ind];
         bin_cnt_toler = BIN_CNT_TOLER_kernel_percent * (bin_cnt);
-      } 
+      }
       else {
         /* the bin is outside the modal bell */
         done=1;
-        #ifdef MODES 
+        #ifdef MODES
         printf(" - Outside mode");
         #endif
-      } 
+      }
       if (bin_lo_ind <= 1) done=1;
-    } 
+    }
     else done=1;
-    #ifdef MODES 
+    #ifdef MODES
       printf("\n");
     #endif
   } while (!done);
@@ -423,26 +423,26 @@ double get_mode(double ord_data[], short vld_data[],
 
 
 
-  /* 
+  /*
     Find all the bins at the *right* of the central bin that are part of the
-    same mode's bell. Stop when another local mode is detected. 
+    same mode's bell. Stop when another local mode is detected.
   */
   bin_cnt    = curr_mode->mode_cnt;
-  bin_lo_ind =  mode_lo_ind; 
-  bin_hi_ind =  mode_hi_ind; 
+  bin_lo_ind =  mode_lo_ind;
+  bin_hi_ind =  mode_hi_ind;
   bin_lo     =  mode_lo;
-  bin_hi     =  mode_hi; 
-  
+  bin_hi     =  mode_hi;
+
   done=0;
   do {
-    /* find window of measurements right of the rightmost modal bin with 
+    /* find window of measurements right of the rightmost modal bin with
        (at most) bin_wd width and with the maximum number of measurements */
     rbin_cnt=0;
     if (bin_hi_ind<no_values-1) {
       for (i=bin_lo_ind+1; i<=bin_hi_ind+1; i++) {
         tmp_cnt=0;
         for (j=i; j<no_values; j++) {
-           if (ord_data[j]<=ord_data[i]+bin_wd) tmp_cnt++; 
+           if (ord_data[j]<=ord_data[i]+bin_wd) tmp_cnt++;
            else break;
          }
         if (tmp_cnt >= rbin_cnt) {
@@ -452,16 +452,16 @@ double get_mode(double ord_data[], short vld_data[],
         }
       }
     }
-    #ifdef MODES 
+    #ifdef MODES
        printf("Right bin: %.3f to %.3f", ord_data[rbin_lo_ind], ord_data[rbin_hi_ind]);
        printf(" (%d msrms)", rbin_cnt);
        printf(" - (%d-%d)", rbin_lo_ind, rbin_hi_ind);
     #endif
 
     if (rbin_cnt>0) {
-      if (rbin_cnt < bin_cnt+bin_cnt_toler) { 
+      if (rbin_cnt < bin_cnt+bin_cnt_toler) {
               /* the bin is inside the modal bell */
-        #ifdef MODES 
+        #ifdef MODES
           printf(" - Inside mode");
         #endif
 
@@ -475,7 +475,7 @@ double get_mode(double ord_data[], short vld_data[],
         curr_mode->bell_cnt += rbin_hi_ind-bin_hi_ind;
         curr_mode->bell_hi   = ord_data[rbin_hi_ind];
         bell_hi_ind = rbin_hi_ind;
-  
+
             /* reset bin counters for next iteration */
         bin_cnt     = rbin_cnt;
         bin_lo_ind  = rbin_lo_ind;
@@ -487,29 +487,29 @@ double get_mode(double ord_data[], short vld_data[],
       else {
               /* the bin is outside the modal bell */
         done=1;
-        #ifdef MODES 
+        #ifdef MODES
           printf(" - Outside mode");
         #endif
       }
       if (rbin_hi_ind >= no_values-2) done=1;
     }
     else done=1;
-    #ifdef MODES 
+    #ifdef MODES
       printf("\n");
     #endif
   } while (!done);
 
-  /* Mark the values that make up this modal bell as invalid */ 
+  /* Mark the values that make up this modal bell as invalid */
   for (i=bell_lo_ind; i<=bell_hi_ind; i++) vld_data[i]=0;
 
   /* Report mode characteristics */
-  if (curr_mode->mode_cnt > BIN_NOISE) 
+  if (curr_mode->mode_cnt > BIN_NOISE)
   {
-    sprintf(message,"\t* Mode:"); prntmsg(pathrate_fp);  
+    sprintf(message,"\t* Mode:"); prntmsg(pathrate_fp);
     if (verbose) prntmsg(stdout);
     print_bw(pathrate_fp, mode_lo);
     if (verbose) print_bw(stdout, mode_lo);
-    sprintf(message,"to"); prntmsg(pathrate_fp); 
+    sprintf(message,"to"); prntmsg(pathrate_fp);
     if (verbose) prntmsg(stdout);
     print_bw(pathrate_fp, mode_hi);
     if (verbose) print_bw(stdout, mode_hi);
@@ -518,7 +518,7 @@ double get_mode(double ord_data[], short vld_data[],
     if (verbose) prntmsg(stdout);
     print_bw(pathrate_fp, curr_mode->bell_lo);
     if (verbose) print_bw(stdout, curr_mode->bell_lo);
-    sprintf(message,"- high :"); prntmsg(pathrate_fp); 
+    sprintf(message,"- high :"); prntmsg(pathrate_fp);
     if (verbose) prntmsg(stdout);
     print_bw(pathrate_fp, curr_mode->bell_hi);
     if (verbose) print_bw(stdout, curr_mode->bell_hi);
@@ -531,18 +531,19 @@ double get_mode(double ord_data[], short vld_data[],
       if (verbose) prntmsg(stdout);
       return UNIMPORTANT_MODE;
     }
-  
+
   /* Return the center of the mode, as the average between the high and low
        ends of the corresponding bin */
     curr_mode->mode_value_lo = mode_lo;
     curr_mode->mode_value_hi = mode_hi;
-    return (LOCAL_MODE); 
-  } 
-  else return UNIMPORTANT_MODE; 
+    return (LOCAL_MODE);
+  }
+  else return UNIMPORTANT_MODE;
 }
 
 void sig_alrm(int signo)
 {
+  (void)signo;
     return;
 }
 
@@ -594,7 +595,7 @@ int recv_train(int train_len, int * round, struct timeval *time[]) {
      sigstruct.sa_flags |= SA_INTERRUPT ;
   #endif
   sigaction(SIGALRM , &sigstruct,NULL );
-   
+
   *time = (struct timeval *) malloc((train_len+1)*sizeof(struct timeval));
   if (time == NULL) {
     fprintf(stderr,"Pathrate_rcv: In recv_train: Insufficient memory\n");
@@ -616,7 +617,7 @@ int recv_train(int train_len, int * round, struct timeval *time[]) {
   ctr_code = SEND | ((*round)<<8);
   send_ctr_msg(ctr_code);
   do {
-    if (recvfrom(sock_udp, pack_buf, pack_sz, 0, (struct sockaddr*)0, (int*)0) == -1) {
+    if (recvfrom(sock_udp, pack_buf, pack_sz, 0, (struct sockaddr*)0, (socklen_t*)0) == -1) {
       /* interrupted??? */
       if (errno == EINTR) {
         if (exp_pack_id==train_len+1) recv_train_done = 1;
@@ -642,7 +643,7 @@ int recv_train(int train_len, int * round, struct timeval *time[]) {
           return(2);
         }
       }
-      else { 
+      else {
 #ifdef DEBUG
   fprintf(stderr,"DEBUG: Why here???\n");
 #endif
@@ -652,15 +653,15 @@ int recv_train(int train_len, int * round, struct timeval *time[]) {
     }
     else {
       gettimeofday(*time+exp_pack_id, (struct timezone*)0);
-      memcpy(&pack_id, pack_buf, sizeof(long));
+      memcpy(&pack_id, pack_buf, sizeof(int));
       pack_id=ntohl(pack_id);
-      memcpy(&train_id, pack_buf+sizeof(long), sizeof(long));
+      memcpy(&train_id, pack_buf+sizeof(int), sizeof(int));
       train_id=ntohl(train_id);
-      memcpy(&round_id, pack_buf+2*sizeof(long), sizeof(long));
+      memcpy(&round_id, pack_buf+2*sizeof(int), sizeof(int));
       round_id=ntohl(round_id);
 
       // printf("Pack %d, %d, %d, %d, %d\n", pack_id, train_id, round_id, exp_pack_id, exp_train_id);
-     
+
       if (round_id!=(*round)) {
         bad_train = 1;
       }
@@ -670,7 +671,7 @@ int recv_train(int train_len, int * round, struct timeval *time[]) {
           exp_pack_id=1;
           exp_train_id=train_id;
         }
-        else if (pack_id==exp_pack_id ) {// && train_id==exp_train_id) 
+        else if (pack_id==exp_pack_id ) {// && train_id==exp_train_id)
           exp_pack_id++;
         }
         else if (train_id != exp_train_id) {
@@ -696,7 +697,7 @@ void help(void) {
   exit(-1);
 }
 
-/* Trying long trains to detect capacity in case interrupt 
+/* Trying long trains to detect capacity in case interrupt
  * coalescing detected.
  */
 int gig_path(int pack_sz, int round, int k_to_u_latency){
@@ -757,7 +758,7 @@ int gig_path(int pack_sz, int round, int k_to_u_latency){
       }
       for (i=1; i<k-1; i++) {
         tmp_cap = 12000.0*(id[i+1]-id[i]-1)/
-	           (time_to_us_delta(pkt_time[id[i]], pkt_time[id[i+1]]));    
+	           (time_to_us_delta(pkt_time[id[i]], pkt_time[id[i+1]]));
         if (tmp_cap >= .9*adr) {
           cap[est]=tmp_cap;
           print_bw(pathrate_fp, cap[est++]);
@@ -799,7 +800,7 @@ int intr_coalescence(struct timeval time[],int len, double latency)
   for (i=2;i<len;i++)
   {
     delta[i] = time_to_us_delta(time[i-1],time[i]);
-#ifdef DEBUG 
+#ifdef DEBUG
    fprintf(stderr,"DEBUG: i %d, disp[i] %.2f\n", i, delta[i]);
 #endif
     if ( delta[i] <= 2.5 * latency )
@@ -807,7 +808,7 @@ int intr_coalescence(struct timeval time[],int len, double latency)
       b2b++ ;
     }
   }
-#ifdef DEBUG 
+#ifdef DEBUG
   fprintf(stderr,"DEBUG: b2b %d len %d\n",b2b,len);
 #endif
   if ( b2b > .6*len ) return 1;
