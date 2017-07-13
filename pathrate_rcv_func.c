@@ -1,30 +1,30 @@
 /*
- This file is part of pathrate.
+  This file is part of pathrate.
 
- pathrate is free software; you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 2 of the License, or
- (at your option) any later version.
+  pathrate is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or
+  (at your option) any later version.
 
- pathrate is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
+  pathrate is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
- You should have received a copy of the GNU General Public License
- along with pathrate; if not, write to the Free Software
- Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  You should have received a copy of the GNU General Public License
+  along with pathrate; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
 /*-------------------------------------------------
-   pathrate : an end-to-end capcity estimation tool
-   Author   : Constantinos Dovrolis (dovrolis@cc.gatech.edu )
-              Ravi S Prasad            ( ravi@cc.gatech.edu )
+  pathrate : an end-to-end capcity estimation tool
+  Author   : Constantinos Dovrolis (dovrolis@cc.gatech.edu )
+  Ravi S Prasad            ( ravi@cc.gatech.edu )
 
-   Release  : Ver 2.4.1
-   Support  : This work was supported by the SciDAC
-              program of the US department
---------------------------------------------------*/
+  Release  : Ver 2.4.1
+  Support  : This work was supported by the SciDAC
+  program of the US department
+  --------------------------------------------------*/
 
 
 #include "pathrate.h"
@@ -89,7 +89,7 @@ void send_ctr_msg(long ctr_code)
 
 
 /*
-        Receive an empty message from the control stream
+  Receive an empty message from the control stream
 */
 long recv_ctr_msg(int ctr_strm, char *ctr_buff)
 {
@@ -121,7 +121,7 @@ void print_bw(FILE *fp, double bw_v)
 
 
 /*
-   Terminate measurements
+  Terminate measurements
 */
 void termint(int exit_code) {
   int ctr_code;
@@ -180,7 +180,7 @@ void happy_end(double bw_lo, double bw_hi)
     fprintf(netlog_fp," PROG=pathrate");
     fprintf(netlog_fp," LVL=Usage");
     if ((snd_host = gethostbyname(hostname)) == 0) {
-        snd_host = gethostbyaddr(hostname,256,AF_INET);
+      snd_host = gethostbyaddr(hostname,256,AF_INET);
     }
     fprintf(netlog_fp," PATHRATE.SNDR=%s",snd_host->h_name);
     fprintf(netlog_fp," PATHRATE.CAPL=%.1fMbps",bw_lo);
@@ -207,16 +207,16 @@ void print_time(FILE *fp, int time)
 */
 double time_to_us_delta(struct timeval tv1, struct timeval tv2)
 {
-   double time_us;
-   time_us = (double)
-     ((tv2.tv_sec-tv1.tv_sec)*1000000+(tv2.tv_usec-tv1.tv_usec));
-   return time_us;
+  double time_us;
+  time_us = (double)
+    ((tv2.tv_sec-tv1.tv_sec)*1000000+(tv2.tv_usec-tv1.tv_usec));
+  return time_us;
 }
 
 void time_copy(struct timeval time_val_old, struct timeval *time_val_new)
 {
-   (*time_val_new).tv_sec =time_val_old.tv_sec;
-   (*time_val_new).tv_usec=time_val_old.tv_usec;
+  (*time_val_new).tv_sec =time_val_old.tv_sec;
+  (*time_val_new).tv_usec=time_val_old.tv_usec;
 }
 
 
@@ -231,7 +231,7 @@ void order(double unord_arr[], double ord_arr[], long no_elems)
   for (i=1; i<no_elems; i++)
     for (j=i-1; j>=0; j--) {
       if (ord_arr[j+1]<ord_arr[j]) {
-         temp=ord_arr[j]; ord_arr[j]=ord_arr[j+1]; ord_arr[j+1]=temp;
+        temp=ord_arr[j]; ord_arr[j]=ord_arr[j+1]; ord_arr[j+1]=temp;
       }
       else break;
     }
@@ -243,11 +243,11 @@ void order(double unord_arr[], double ord_arr[], long no_elems)
 */
 double get_avg(double data[], long no_values)
 {
-   long i;
-   double sum_;
-   sum_ = 0;
-   for (i=0; i<no_values; i++) sum_ += data[i];
-   return (sum_ / (double)no_values);
+  long i;
+  double sum_;
+  sum_ = 0;
+  for (i=0; i<no_values; i++) sum_ += data[i];
+  return (sum_ / (double)no_values);
 }
 
 
@@ -257,12 +257,12 @@ double get_avg(double data[], long no_values)
 */
 double get_std(double data[], long no_values)
 {
-   long i;
-   double sum_, mean;
-   mean = get_avg(data, no_values);
-   sum_ = 0;
-   for (i=0; i<no_values; i++) sum_ += pow(data[i]-mean, 2.);
-   return sqrt(sum_ / (double)(no_values-1));
+  long i;
+  double sum_, mean;
+  mean = get_avg(data, no_values);
+  sum_ = 0;
+  for (i=0; i<no_values; i++) sum_ += pow(data[i]-mean, 2.);
+  return sqrt(sum_ / (double)(no_values-1));
 }
 
 
@@ -273,14 +273,14 @@ double get_std(double data[], long no_values)
   The set has <no_values> elements, and it is ordered in increasing sequence.
   The function returns the center value of the modal bin.
   Also, the following call-by-ref arguments return:
-    mode_cnt:    # of measurements in modal bin
-    bell_cnt:    # of measurements in entire mode
-             (modal bin+surrounding bins of the same `bell')
-    bell_lo:     low bandwidth threshold of modal `bell'
-    bell_hi:     high bandwidth threshold of modal `bell'
+  mode_cnt:    # of measurements in modal bin
+  bell_cnt:    # of measurements in entire mode
+  (modal bin+surrounding bins of the same `bell')
+  bell_lo:     low bandwidth threshold of modal `bell'
+  bell_hi:     high bandwidth threshold of modal `bell'
 */
 double get_mode(double ord_data[], short vld_data[],
-    double bin_wd, int no_values, mode_struct *curr_mode)
+                double bin_wd, int no_values, mode_struct *curr_mode)
 {
   int
     i, j, done, tmp_cnt,
@@ -298,9 +298,9 @@ double get_mode(double ord_data[], short vld_data[],
   j=0;
   for (i=0; i<no_values; i++) j+=vld_data[i];
   if (j==0) return LAST_MODE; /* no more modes */
-  #ifdef MODES
-    printf("\n%d valid measurements\n", j);
-  #endif
+#ifdef MODES
+  printf("\n%d valid measurements\n", j);
+#endif
   /* Initialize mode struct */
   curr_mode->mode_cnt=0;
   curr_mode->bell_cnt=0;
@@ -329,10 +329,10 @@ double get_mode(double ord_data[], short vld_data[],
   curr_mode->mode_cnt  = tmp_cnt;
   mode_lo   = ord_data[mode_lo_ind];
   mode_hi   = ord_data[mode_hi_ind];
-  #ifdef MODES
-    printf("Central mode bin from %.3f to %.3f (%d msrms)", mode_lo, mode_hi, *mode_cnt);
-    printf(" - (%d-%d)\n", mode_lo_ind, mode_hi_ind);
-  #endif
+#ifdef MODES
+  printf("Central mode bin from %.3f to %.3f (%d msrms)", mode_lo, mode_hi, *mode_cnt);
+  printf(" - (%d-%d)\n", mode_lo_ind, mode_hi_ind);
+#endif
 
   curr_mode->bell_cnt  = tmp_cnt;
   curr_mode->bell_lo  = mode_lo;
@@ -341,8 +341,8 @@ double get_mode(double ord_data[], short vld_data[],
   bell_hi_ind     = mode_hi_ind;
 
   /*
-        Find all the bins at the *left* of the central bin that are part of the
-        same mode's bell. Stop when another local mode is detected.
+    Find all the bins at the *left* of the central bin that are part of the
+    same mode's bell. Stop when another local mode is detected.
   */
   bin_cnt    = curr_mode->mode_cnt;
   bin_lo_ind =  mode_lo_ind;
@@ -350,13 +350,13 @@ double get_mode(double ord_data[], short vld_data[],
   bin_lo     =  mode_lo;
   bin_hi     =  mode_hi;
 
-    /* Weiling:  noise tolerance is determined by bin_cnt_toler, and it's
-     * proportional to previous bin_cnt instead of constant BIN_NOISE_TOLER . */
+  /* Weiling:  noise tolerance is determined by bin_cnt_toler, and it's
+   * proportional to previous bin_cnt instead of constant BIN_NOISE_TOLER . */
 
   done=0;
   bin_cnt_toler = BIN_CNT_TOLER_kernel_percent * (bin_cnt);
   do {
-      /* find window of measurements left of the leftmost modal bin with
+    /* find window of measurements left of the leftmost modal bin with
        (at most) bin_wd width and with the maximum number of measurements */
     lbin_cnt=0;
     if (bin_lo_ind>0) {
@@ -373,24 +373,24 @@ double get_mode(double ord_data[], short vld_data[],
         }
       }
     }
-    #ifdef MODES
-         printf("Left bin: %.3f to %.3f", ord_data[lbin_lo_ind], ord_data[lbin_hi_ind]);
-         printf(" (%d msrms)", lbin_cnt);
-         printf(" - (%d-%d)", lbin_lo_ind, lbin_hi_ind);
-    #endif
+#ifdef MODES
+    printf("Left bin: %.3f to %.3f", ord_data[lbin_lo_ind], ord_data[lbin_hi_ind]);
+    printf(" (%d msrms)", lbin_cnt);
+    printf(" - (%d-%d)", lbin_lo_ind, lbin_hi_ind);
+#endif
 
     if (lbin_cnt>0) {
       if (lbin_cnt < bin_cnt+bin_cnt_toler) {
-         /* the bin is inside the modal bell */
-        #ifdef MODES
-          printf(" - Inside mode");
-        #endif
+        /* the bin is inside the modal bell */
+#ifdef MODES
+        printf(" - Inside mode");
+#endif
 
         /* update bell counters */
         /* Weiling:
-         In prevoius version (2.3.0), the count and lo threshold counters are updated
-         only if bin has a significant number of measurements
-         In this version (2.3.1), the count and lo threshold counters are updated anyway
+           In prevoius version (2.3.0), the count and lo threshold counters are updated
+           only if bin has a significant number of measurements
+           In this version (2.3.1), the count and lo threshold counters are updated anyway
         */
 
         curr_mode->bell_cnt += bin_lo_ind-lbin_lo_ind;
@@ -408,16 +408,16 @@ double get_mode(double ord_data[], short vld_data[],
       else {
         /* the bin is outside the modal bell */
         done=1;
-        #ifdef MODES
+#ifdef MODES
         printf(" - Outside mode");
-        #endif
+#endif
       }
       if (bin_lo_ind <= 1) done=1;
     }
     else done=1;
-    #ifdef MODES
-      printf("\n");
-    #endif
+#ifdef MODES
+    printf("\n");
+#endif
   } while (!done);
 
 
@@ -442,9 +442,9 @@ double get_mode(double ord_data[], short vld_data[],
       for (i=bin_lo_ind+1; i<=bin_hi_ind+1; i++) {
         tmp_cnt=0;
         for (j=i; j<no_values; j++) {
-           if (ord_data[j]<=ord_data[i]+bin_wd) tmp_cnt++;
-           else break;
-         }
+          if (ord_data[j]<=ord_data[i]+bin_wd) tmp_cnt++;
+          else break;
+        }
         if (tmp_cnt >= rbin_cnt) {
           rbin_cnt    = tmp_cnt;
           rbin_lo_ind = i;
@@ -452,31 +452,31 @@ double get_mode(double ord_data[], short vld_data[],
         }
       }
     }
-    #ifdef MODES
-       printf("Right bin: %.3f to %.3f", ord_data[rbin_lo_ind], ord_data[rbin_hi_ind]);
-       printf(" (%d msrms)", rbin_cnt);
-       printf(" - (%d-%d)", rbin_lo_ind, rbin_hi_ind);
-    #endif
+#ifdef MODES
+    printf("Right bin: %.3f to %.3f", ord_data[rbin_lo_ind], ord_data[rbin_hi_ind]);
+    printf(" (%d msrms)", rbin_cnt);
+    printf(" - (%d-%d)", rbin_lo_ind, rbin_hi_ind);
+#endif
 
     if (rbin_cnt>0) {
       if (rbin_cnt < bin_cnt+bin_cnt_toler) {
-              /* the bin is inside the modal bell */
-        #ifdef MODES
-          printf(" - Inside mode");
-        #endif
+        /* the bin is inside the modal bell */
+#ifdef MODES
+        printf(" - Inside mode");
+#endif
 
         /* update bell counters */
         /* Weiling:
-         In prevoius version (2.3.0), the count and lo threshold counters are updated
-         only if bin has a significant number of measurements
-         In this version (2.3.1), the count and lo threshold counters are updated anyway
+           In prevoius version (2.3.0), the count and lo threshold counters are updated
+           only if bin has a significant number of measurements
+           In this version (2.3.1), the count and lo threshold counters are updated anyway
         */
 
         curr_mode->bell_cnt += rbin_hi_ind-bin_hi_ind;
         curr_mode->bell_hi   = ord_data[rbin_hi_ind];
         bell_hi_ind = rbin_hi_ind;
 
-            /* reset bin counters for next iteration */
+        /* reset bin counters for next iteration */
         bin_cnt     = rbin_cnt;
         bin_lo_ind  = rbin_lo_ind;
         bin_hi_ind  = rbin_hi_ind;
@@ -485,18 +485,18 @@ double get_mode(double ord_data[], short vld_data[],
         bin_cnt_toler = BIN_CNT_TOLER_kernel_percent * (bin_cnt);
       }
       else {
-              /* the bin is outside the modal bell */
+        /* the bin is outside the modal bell */
         done=1;
-        #ifdef MODES
-          printf(" - Outside mode");
-        #endif
+#ifdef MODES
+        printf(" - Outside mode");
+#endif
       }
       if (rbin_hi_ind >= no_values-2) done=1;
     }
     else done=1;
-    #ifdef MODES
-      printf("\n");
-    #endif
+#ifdef MODES
+    printf("\n");
+#endif
   } while (!done);
 
   /* Mark the values that make up this modal bell as invalid */
@@ -514,7 +514,7 @@ double get_mode(double ord_data[], short vld_data[],
     print_bw(pathrate_fp, mode_hi);
     if (verbose) print_bw(stdout, mode_hi);
     sprintf(message," - %ld measurements\n\t  Modal bell: %ld measurements - low :",
-        curr_mode->mode_cnt, curr_mode->bell_cnt); prntmsg(pathrate_fp);
+            curr_mode->mode_cnt, curr_mode->bell_cnt); prntmsg(pathrate_fp);
     if (verbose) prntmsg(stdout);
     print_bw(pathrate_fp, curr_mode->bell_lo);
     if (verbose) print_bw(stdout, curr_mode->bell_lo);
@@ -532,7 +532,7 @@ double get_mode(double ord_data[], short vld_data[],
       return UNIMPORTANT_MODE;
     }
 
-  /* Return the center of the mode, as the average between the high and low
+    /* Return the center of the mode, as the average between the high and low
        ends of the corresponding bin */
     curr_mode->mode_value_lo = mode_lo;
     curr_mode->mode_value_hi = mode_hi;
@@ -544,7 +544,7 @@ double get_mode(double ord_data[], short vld_data[],
 void sig_alrm(int signo)
 {
   (void)signo;
-    return;
+  return;
 }
 
 void *ctr_listen(void *arg)
@@ -591,12 +591,12 @@ int recv_train(int train_len, int * round, struct timeval *time[]) {
   sigstruct.sa_handler = sig_alrm ;
   sigemptyset(&sigstruct.sa_mask);
   sigstruct.sa_flags = 0 ;
-  #ifdef SA_INTERRUPT
-     sigstruct.sa_flags |= SA_INTERRUPT ;
-  #endif
+#ifdef SA_INTERRUPT
+  sigstruct.sa_flags |= SA_INTERRUPT ;
+#endif
   sigaction(SIGALRM , &sigstruct,NULL );
 
-  *time = (struct timeval *) malloc((train_len+1)*sizeof(struct timeval));
+  *time = (struct timeval *) malloc(10*(train_len+1)*sizeof(struct timeval));
   if (time == NULL) {
     fprintf(stderr,"Pathrate_rcv: In recv_train: Insufficient memory\n");
     exit(-1);
@@ -616,6 +616,7 @@ int recv_train(int train_len, int * round, struct timeval *time[]) {
   }
   ctr_code = SEND | ((*round)<<8);
   send_ctr_msg(ctr_code);
+
   do {
     if (recvfrom(sock_udp, pack_buf, pack_sz, 0, (struct sockaddr*)0, (socklen_t*)0) == -1) {
       /* interrupted??? */
@@ -645,13 +646,15 @@ int recv_train(int train_len, int * round, struct timeval *time[]) {
       }
       else {
 #ifdef DEBUG
-  fprintf(stderr,"DEBUG: Why here???\n");
+        fprintf(stderr,"DEBUG: Why here???\n");
 #endif
         perror("RECVFROM:");
         termint(-1);
       }
     }
     else {
+      // XXX: there was a buffer overflow if we received too many messages.
+      // I doubled the size of the buffer so like fuck it.
       gettimeofday(*time+exp_pack_id, (struct timezone*)0);
       memcpy(&pack_id, pack_buf, sizeof(int));
       pack_id=ntohl(pack_id);
@@ -723,7 +726,10 @@ int gig_path(int pack_sz, int round, int k_to_u_latency){
     send_ctr_msg(ctr_code);
     ctr_code=PCK_LEN | (pack_sz<<8);
     send_ctr_msg(ctr_code);
-    if ( pkt_time != NULL ) free (pkt_time);
+    if ( pkt_time != NULL ) {
+      free(pkt_time);
+      pkt_time = NULL;
+    }
     bad_train = recv_train(train_len, &round, &pkt_time);
     if (bad_train == 2) {/* train too big... try smaller */
       train_len-=20;
@@ -749,7 +755,7 @@ int gig_path(int pack_sz, int round, int k_to_u_latency){
 	    num_b2b = 1;
       for (i=2; i<train_len; i++){
         if ( (num_b2b<=5) ||(disps[i] < num_b2b*1.5*k_to_u_latency) ){
-           num_b2b++;
+          num_b2b++;
         }
         else{
           id[k++]=i;
@@ -758,7 +764,7 @@ int gig_path(int pack_sz, int round, int k_to_u_latency){
       }
       for (i=1; i<k-1; i++) {
         tmp_cap = 12000.0*(id[i+1]-id[i]-1)/
-	           (time_to_us_delta(pkt_time[id[i]], pkt_time[id[i+1]]));
+          (time_to_us_delta(pkt_time[id[i]], pkt_time[id[i+1]]));
         if (tmp_cap >= .9*adr) {
           cap[est]=tmp_cap;
           print_bw(pathrate_fp, cap[est++]);
@@ -801,7 +807,7 @@ int intr_coalescence(struct timeval time[],int len, double latency)
   {
     delta[i] = time_to_us_delta(time[i-1],time[i]);
 #ifdef DEBUG
-   fprintf(stderr,"DEBUG: i %d, disp[i] %.2f\n", i, delta[i]);
+    fprintf(stderr,"DEBUG: i %d, disp[i] %.2f\n", i, delta[i]);
 #endif
     if ( delta[i] <= 2.5 * latency )
     {

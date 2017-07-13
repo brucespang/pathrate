@@ -74,12 +74,8 @@ int main(int argc, char* argv[])
     Check command line arguments
   */
   verbose = 1;
-  iterative = 0;
-  while ((c = getopt(argc, argv, "ivhHqo:")) != EOF)
+  while ((c = getopt(argc, argv, "vhHqo:")) != EOF)
   switch (c) {
-    case 'i':
-      iterative = 1;
-      break;
     case 'q':
       Verbose=0;
       verbose=0;
@@ -231,7 +227,7 @@ int main(int argc, char* argv[])
     /*
       Create random packet payload to deal with links that do payload compression
     */
-    srandom(getpid());
+    srandom(0);
     for (i=0; i<MAX_PACK_SZ-1; i++)
       random_data[i]=(char)(random()&0x000000ff);
     bzero((char*)&pack_buf, MAX_PACK_SZ);
@@ -476,8 +472,5 @@ int main(int argc, char* argv[])
          } while (trains_ackd < no_trains && !reset_flag && !done);
       } /* if (ctr_command==SEND) */
     } /* while (!done)  */
-  } while(iterative);  /* Repeat forever if in iterative mode */
-
-
-  exit(0);
+  } while(1);  /* Repeat forever */
 }

@@ -50,8 +50,6 @@ int main(int argc, char* argv[])
   socklen_t opt_len;
 
   int errflg=0;
-  int file=0;
-  int append=0;
   int gothostname=0;
   int quick_term=0;
 
@@ -137,8 +135,7 @@ int main(int argc, char* argv[])
   */
   verbose = 1;
   netlog = 0;
-  append = 0;
-  while ((c = getopt(argc, argv, "s:N:vQhHqo:O:")) != EOF){
+  while ((c = getopt(argc, argv, "s:N:vQhHq")) != EOF){
     switch (c) {
       case 's':
         gothostname = 1;
@@ -153,15 +150,6 @@ int main(int argc, char* argv[])
         break;
       case 'v':
         Verbose=1;
-        break;
-      case 'o':
-        file=1;
-        strcpy(filename,optarg);
-        break;
-      case 'O':
-        file=1;
-        append=1;
-        strcpy(filename,optarg);
         break;
       case 'N':
         netlog=1;
@@ -178,21 +166,6 @@ int main(int argc, char* argv[])
       case '?':
         errflg++;
     }
-  }
-
-  if (file){
-    if (append){
-      pathrate_fp = fopen(filename,"a");
-      fprintf(pathrate_fp, "\n\n");
-    }
-    else{
-      pathrate_fp = fopen(filename,"w");
-      fprintf(pathrate_fp, "\n\n");
-    }
-  }
-  else{
-     pathrate_fp = fopen("pathrate.output" , "a" ) ;
-     fprintf(pathrate_fp, "\n\n");
   }
   if (netlog) {
     netlog_fp = fopen(filename,"a");
@@ -216,18 +189,11 @@ int main(int argc, char* argv[])
       host_snd = gethostbyaddr(hostname,256,AF_INET);
   }
 
-  /* Print arguments in the log file */
-  for (i=0; i<argc; i++)
-    fprintf(pathrate_fp, "%s ", argv[i]);
-  fprintf(pathrate_fp, "\n");
-
-
   /* Print date and path info at trace file */
   localtm = time(NULL);
   gethostname(pack_buf, 256);
   sprintf(message,"\tpathrate run from %s to %s on %s",
           hostname, pack_buf, ctime(&localtm));
-  prntmsg(pathrate_fp);
   if(verbose) prntmsg(stdout);
 
   /*
@@ -272,8 +238,7 @@ int main(int argc, char* argv[])
      perror("Make sure that pathrate_snd runs at sender:");
      exit(-1);
   }
-
-
+\
   /*
           Estimate round-trip time
   */
@@ -289,7 +254,6 @@ int main(int argc, char* argv[])
   }
   rtt = (double) (sum_rtt/9000.);
   sprintf(message,"\t--> Average round-trip time: %.1fms\n\n", rtt);
-  prntmsg(pathrate_fp);
   if (verbose) prntmsg(stdout);
 
   /*
@@ -361,7 +325,6 @@ int main(int argc, char* argv[])
   min_possible_delta *= 3;
   sprintf(message,"--> Minimum acceptable packet pair dispersion: %.0f usec\n",
       min_possible_delta);
-  prntmsg(pathrate_fp);
   if (Verbose) prntmsg(stdout);
 
   /* The default initial train-length in Phase I is 2 packets (packet pairs) */
@@ -380,7 +343,6 @@ int main(int argc, char* argv[])
     --------------------------------------------------
   */
   sprintf(message,"\n-- Maximum train length discovery -- \n");
-  prntmsg(pathrate_fp);
 
   /* Send packet size  to sender -> maximum at this phase */
   no_trains = 1;
@@ -402,7 +364,10 @@ int main(int argc, char* argv[])
       send_ctr_msg(ctr_code);
     }
     /* Wait for a complete packet train */
-    if ( time_stmps != NULL ) free(time_stmps);
+    if ( time_stmps != NULL ) {
+      free(time_stmps);
+      time_stmps = NULL;
+    }
     bad_train = recv_train(train_len, &round, &time_stmps);
 
     /* Compute dispersion and bandwidth measurement */
@@ -413,20 +378,16 @@ int main(int argc, char* argv[])
        delta = time_to_us_delta(time_stmps[1], time_stmps[train_len]);
        bw_msr = ((28+pack_sz) << 3) * (train_len-1) / delta;
        sprintf(message,"\tTrain length: %d ->\t", train_len);
-       prntmsg(pathrate_fp);
        if (Verbose) prntmsg(stdout);
-       print_bw(pathrate_fp, bw_msr);
        if (Verbose) print_bw(stdout, bw_msr);
        if (delta > min_possible_delta * (train_len-1)) {
          sprintf(message,"\n");
-         prntmsg(pathrate_fp);
          if (Verbose) prntmsg(stdout);
          /* Acceptable measurement */
          measurs_P1[trains_msrd++] = bw_msr;
        }
        else {
          sprintf(message,"(ignored) \n");
-         prntmsg(pathrate_fp);
          if (Verbose) prntmsg(stdout);
        }
 
@@ -459,7 +420,6 @@ int main(int argc, char* argv[])
   else
     max_train_len = train_len;
   sprintf(message,"\t--> Maximum train length: %d packets \n\n", max_train_len);
-  prntmsg(pathrate_fp);
   if (Verbose) prntmsg(stdout);
   /* Tell sender to continue with  next phase */
   //ctr_code = CONTINUE;
@@ -471,14 +431,16 @@ int main(int argc, char* argv[])
   ctr_code = TRAIN_LEN | (max_train_len<<8);
   send_ctr_msg(ctr_code);
   do {
-    if ( time_stmps != NULL ) free(time_stmps);
+    if ( time_stmps != NULL ) {
+      free(time_stmps);
+      time_stmps = NULL;
+    }
     bad_train = recv_train(max_train_len, &round, &time_stmps);
   }while(bad_train);
 
   tmp = intr_coalescence(time_stmps, max_train_len, min_possible_delta/3);
   if (tmp) {
     sprintf(message,"Detected Interrupt Coalescence... \n");
-    prntmsg(pathrate_fp);
     if (Verbose) prntmsg(stdout);
     gig_path(max_pack_sz, round++,min_possible_delta/3);
   }
@@ -491,7 +453,6 @@ int main(int argc, char* argv[])
 
   sprintf(message,"\n--Preliminary measurements with increasing packet train lengths--\n");
 
-  prntmsg(pathrate_fp);
   if (Verbose) prntmsg(stdout);
   /* Send number of trains to sender (five of them is good enough..) */
   no_trains = 7;  // Ravi: No need to send this to sender... we ask for each train now.
@@ -504,7 +465,6 @@ int main(int argc, char* argv[])
   do {
     /* Send train length to sender */
     sprintf(message,"  Train length: %d -> ", train_len);
-    prntmsg(pathrate_fp);
     if (Verbose) prntmsg(stdout);
 
     if (!retransmit) {
@@ -515,14 +475,16 @@ int main(int argc, char* argv[])
     trains_rcvd=0;
     do {  /* for each train-length */
       /* Wait for a complete packet train */
-      if ( time_stmps != NULL ) free(time_stmps);
+      if ( time_stmps != NULL ) {
+        free(time_stmps);
+        time_stmps = NULL;
+      }
       bad_train = recv_train(train_len, &round, &time_stmps);
 
       /* Compute dispersion and bandwidth measurement */
       if (!bad_train) {
         delta = time_to_us_delta(time_stmps[1], time_stmps[train_len]);
         bw_msr = ((28+pack_sz) << 3) * (train_len-1) / delta;
-        print_bw(pathrate_fp, bw_msr);
         if (Verbose) print_bw(stdout, bw_msr);
         if (delta > min_possible_delta * (train_len-1)) {
           /* Acceptable measurement */
@@ -532,7 +494,6 @@ int main(int argc, char* argv[])
       }
     }while(trains_rcvd<no_trains);
     sprintf(message,"\n");
-    prntmsg(pathrate_fp);
     if (Verbose) prntmsg(stdout);
 
     if (!retransmit) {
@@ -578,12 +539,9 @@ int main(int argc, char* argv[])
 
   if (bin_wd == 0) bin_wd = 20.0;
   sprintf(message,"\n\t--> Capacity Resolution: ");
-  prntmsg(pathrate_fp);
   if (verbose) prntmsg(stdout);
-  print_bw(pathrate_fp, bin_wd);
   if (verbose) print_bw(stdout, bin_wd);
   sprintf(message,"\n");
-  prntmsg(pathrate_fp);
   if (verbose) prntmsg(stdout);
   /* Check for quick estimate (when measurements are not very spread) */
   if( (std_dev/avg_bw<COEF_VAR_THR) || quick_term) {
@@ -591,10 +549,8 @@ int main(int argc, char* argv[])
       sprintf(message," - Requested Quick Termination");
     else
       sprintf(message,"`Quick Termination' - Sufficiently low measurement noise");
-    prntmsg(pathrate_fp);
     if(verbose) prntmsg(stdout);
     sprintf(message,"\n\n--> Coefficient of variation: %.3f \n", std_dev/avg_bw);
-    prntmsg(pathrate_fp);
     if(verbose) prntmsg(stdout);
     happy_end(avg_bw-bin_wd/2., avg_bw+bin_wd/2.);
     termint(0);
@@ -610,7 +566,6 @@ int main(int argc, char* argv[])
     ----------------------------------------------------------
   */
   sprintf(message,"\n\n-- Phase I: Detect possible capacity modes -- \n\n");
-  prntmsg(pathrate_fp);
   if (verbose) prntmsg(stdout);
   sleep(1);
 
@@ -648,7 +603,6 @@ int main(int argc, char* argv[])
 
        sprintf(message,"\t-> Train length: %2d - Packet size: %4dB -> %2d%% completed\n",
            train_len, pack_sz+28, i*100/no_pack_sizes);
-       prntmsg(pathrate_fp);
        if (verbose) prntmsg(stdout);
        bad_tstamps = 0;
        trains_per_size = 0;
@@ -656,7 +610,10 @@ int main(int argc, char* argv[])
 
      do {
         /* Wait for a complete packet train */
-        if ( time_stmps != NULL ) free(time_stmps);
+       if ( time_stmps != NULL ) {
+         free(time_stmps);
+         time_stmps = NULL;
+       }
         bad_train = recv_train(train_len, &round, &time_stmps);
 
           /* Compute dispersion and bandwidth measurement */
@@ -664,12 +621,9 @@ int main(int argc, char* argv[])
           delta = time_to_us_delta(time_stmps[1], time_stmps[train_len]);
           bw_msr = ((28+pack_sz) << 3) * (train_len-1) / delta;
           sprintf(message,"\tMeasurement-%d:", trains_per_size+1);
-          prntmsg(pathrate_fp);
           if (Verbose) prntmsg(stdout);
-          print_bw(pathrate_fp, bw_msr);
           if (Verbose) print_bw(stdout, bw_msr);
           sprintf(message," (%.0f usec)",delta);
-          prntmsg(pathrate_fp);
           if (Verbose) prntmsg(stdout);
 
           /* Acceptable measurement */
@@ -679,14 +633,12 @@ int main(int argc, char* argv[])
           else {
             bad_tstamps++;
             sprintf(message," (ignored)");
-            prntmsg(pathrate_fp);
             if (Verbose) prntmsg(stdout);
           }
 
           /* # of trains received in this packet size iteration */
           trains_per_size++;
           sprintf(message,"\n");
-          prntmsg(pathrate_fp);
           if (Verbose) prntmsg(stdout);
        }
      } while(trains_per_size < no_trains_per_size);
@@ -707,7 +659,6 @@ int main(int argc, char* argv[])
        if (!abort_phase1){
          sprintf(message,"\n\tToo many ignored measurements..\n\tAdjust train length: %d packets\n\tAdjust packet size: %d bytes\n\n",
               train_len, MIN_V(pack_sz,max_pack_sz)+28);
-         prntmsg(pathrate_fp);
          if (Verbose) prntmsg(stdout);
        }
        else
@@ -727,7 +678,6 @@ int main(int argc, char* argv[])
 
     /* Detect and store all local modes */
     sprintf(message,"\n\n-- Local modes : In Phase I --\n");
-    prntmsg(pathrate_fp);
     if (verbose) prntmsg(stdout);
 
     /* Mark all measurements as valid (needed for local mode detection) */
@@ -754,12 +704,10 @@ int main(int argc, char* argv[])
       }
     }
     sprintf(message,"\n");
-    prntmsg(pathrate_fp);
     if (verbose) prntmsg(stdout);
   }
   else {
     sprintf(message,"\n\tAborting Phase I measurements..\n\tToo many ignored measurements\n\tPhase II will report lower bound on path capacity.\n");
-    prntmsg(pathrate_fp);
     if (verbose) prntmsg(stdout);
 
   }
@@ -777,7 +725,6 @@ int main(int argc, char* argv[])
     -------------------------------------------------
   */
   sprintf(message,"\n\n-- Phase II: Estimate Asymptotic Dispersion Rate (ADR) -- \n\n");
-  prntmsg(pathrate_fp);
   if (verbose) prntmsg(stdout);
 
   /* Train spacing in Phase II */
@@ -807,7 +754,6 @@ int main(int argc, char* argv[])
 
   sprintf(message,"\t-- Number of trains: %d - Train length: %d - Packet size: %dB\n",
                   no_trains, train_len, pack_sz+28);
-  prntmsg(pathrate_fp);
   if (verbose) prntmsg(stdout);
 
   /* Tell sender to start sending */
@@ -818,7 +764,10 @@ int main(int argc, char* argv[])
 
   do {
      /* Wait for a complete packet train */
-     if ( time_stmps != NULL ) free(time_stmps);
+    if ( time_stmps != NULL ) {
+      free(time_stmps);
+      time_stmps = NULL;
+    }
      bad_train = recv_train(train_len, &round, &time_stmps);
 
     /* Compute dispersion and bandwidth measurement */
@@ -826,12 +775,9 @@ int main(int argc, char* argv[])
         delta = time_to_us_delta(time_stmps[1], time_stmps[train_len]);
         bw_msr = ((28+pack_sz) << 3) * (train_len-1) / delta;
         sprintf(message,"\tMeasurement-%4d out of %3d:", trains_rcvd+1, no_trains);
-        prntmsg(pathrate_fp);
         if (Verbose) prntmsg(stdout);
-        print_bw(pathrate_fp, bw_msr);
         if (Verbose) print_bw(stdout, bw_msr);
         sprintf(message," (%.0f usec)", delta);
-        prntmsg(pathrate_fp);
         if (Verbose) prntmsg(stdout);
 
       /* Acceptable measurement */
@@ -842,13 +788,11 @@ int main(int argc, char* argv[])
         else {
           bad_tstamps++;
           sprintf(message," (ignored)");
-          prntmsg(pathrate_fp);
           if (Verbose) prntmsg(stdout);
         }
 
         trains_rcvd++;
         sprintf(message,"\n");
-        prntmsg(pathrate_fp);
         if (Verbose) prntmsg(stdout);
      }
   } while(trains_rcvd<no_trains);
@@ -869,7 +813,6 @@ int main(int argc, char* argv[])
 
   /* Detect and store all local modes in Phase II */
   sprintf(message,"\n-- Local modes : In Phase II --\n");
-  prntmsg(pathrate_fp);
   if (verbose) prntmsg(stdout);
 
   /* Mark all measurements as valid (needed for local mode detection) */
@@ -897,7 +840,6 @@ int main(int argc, char* argv[])
     }
   }
   sprintf(message,"\n");
-  prntmsg(pathrate_fp);
   if (Verbose) prntmsg(stdout);
 
   /*
@@ -914,7 +856,6 @@ int main(int argc, char* argv[])
   adr_narrow=0;
   if (no_modes_P2==1 && std_dev/adr<COEF_VAR_THR && adr/avg_bw>ADR_REDCT_THR) {
      //sprintf(message,"    The capacity estimate will be based on the ADR mode.\n");
-     //prntmsg(pathrate_fp);
      //if (Verbose) prntmsg(stdout);
      adr = (modes_P2[0].mode_value_lo + modes_P2[0].mode_value_hi)/2.0;
      adr_narrow=1;
@@ -922,26 +863,20 @@ int main(int argc, char* argv[])
   if (no_modes_P2 > 1){
     sprintf(message,"\n    WARNING: Phase II did not lead to unimodal distribution.\n\
         The ADR estimate may be wrong. Run again later. \n\n");
-    prntmsg(pathrate_fp);
     if (Verbose) prntmsg(stdout);
     max_merit=0.;
     for(i=0;i<no_modes_P2;i++) {
       sprintf(message,"\t");
-      prntmsg(pathrate_fp);
       if (Verbose) prntmsg(stdout);
-      print_bw(pathrate_fp, modes_P2[i].mode_value_lo);
       if (Verbose) print_bw(stdout, modes_P2[i].mode_value_lo);
       sprintf(message,"to");
-      prntmsg(pathrate_fp);
       if (Verbose) prntmsg(stdout);
-      print_bw(pathrate_fp, modes_P2[i].mode_value_hi);
       if(Verbose) print_bw(stdout, modes_P2[i].mode_value_hi);
       // merit = (modes_P2[i].mode_cnt / (double)modes_P2[i].bell_cnt)
       // Weiling: merit is calculated using kurtosis as the narrowness of the bell
       merit = modes_P2[i].bell_kurtosis
             * (modes_P2[i].mode_cnt / (double)no_trains);
       sprintf(message," - Figure of merit: %.2f\n", merit);
-      prntmsg(pathrate_fp);
       if (Verbose) prntmsg(stdout);
       if (merit > max_merit) {
          max_merit = merit;
@@ -951,12 +886,9 @@ int main(int argc, char* argv[])
     adr = (modes_P2[cap_mode_ind].mode_value_lo+modes_P2[cap_mode_ind].mode_value_lo)/2.0;
   }
   sprintf(message,"--> Asymptotic Dispersion Rate (ADR) estimate:");
-  prntmsg(pathrate_fp);
   if (Verbose) prntmsg(stdout);
-  print_bw(pathrate_fp, adr);
   if (Verbose) print_bw(stdout, adr);
   sprintf(message,"\n");
-  prntmsg(pathrate_fp);
   if (Verbose) prntmsg(stdout);
 
   /*
@@ -977,28 +909,22 @@ int main(int argc, char* argv[])
   */
   if (!abort_phase1){
     sprintf(message,"\n--> Possible capacity values:\n");
-    prntmsg(pathrate_fp);
     if (Verbose) prntmsg(stdout);
     max_merit=0.;
     for(i=0;i<no_modes_P1;i++){
       /* Give possible capacity modes */
       if (modes_P1[i].mode_value_hi > adr) {
         sprintf(message,"\t");
-        prntmsg(pathrate_fp);
         if (Verbose) prntmsg(stdout);
-        print_bw(pathrate_fp, modes_P1[i].mode_value_lo);
         if (Verbose) print_bw(stdout, modes_P1[i].mode_value_lo);
         sprintf(message,"to");
-        prntmsg(pathrate_fp);
         if (Verbose) prntmsg(stdout);
-        print_bw(pathrate_fp, modes_P1[i].mode_value_hi);
         if (Verbose) print_bw(stdout, modes_P1[i].mode_value_hi);
         // merit = (modes_P1[i].mode_cnt / (double)modes_P1[i].bell_cnt)
         // Weiling: merit is calculated using kurtosis as the narrowness of the bell
         merit = modes_P1[i].bell_kurtosis
               * (modes_P1[i].mode_cnt / (double)no_trains_P1);
         sprintf(message," - Figure of merit: %.2f\n", merit);
-        prntmsg(pathrate_fp);
         if (Verbose) prntmsg(stdout);
         if (merit > max_merit) {
           max_merit =  merit;
@@ -1025,17 +951,12 @@ int main(int argc, char* argv[])
        * the best choice for the capacity mode is the largest mode of Phase II
        */
       sprintf(message,"\t");
-      prntmsg(pathrate_fp);
       if (Verbose) prntmsg(stdout);
-      print_bw(pathrate_fp, adr-bin_wd/2.);
       if (Verbose) print_bw(stdout, adr-bin_wd/2.);
       sprintf(message,"to");
-      prntmsg(pathrate_fp);
       if (Verbose) prntmsg(stdout);
-      print_bw(pathrate_fp, adr+bin_wd/2.);
       if (Verbose) print_bw(stdout, adr+bin_wd/2.);
       sprintf(message," - ADR mode\n");
-      prntmsg(pathrate_fp);
       if (Verbose) prntmsg(stdout);
 
       happy_end(adr-bin_wd/2., adr+bin_wd/2.);
@@ -1045,7 +966,6 @@ int main(int argc, char* argv[])
   else{
     max_merit=0.;
     sprintf(message,"--> Phase I was aborted.\n--> The following estimate is a lower bound for the path capacity.\n ");
-    prntmsg(pathrate_fp);
     if (Verbose) prntmsg(stdout);
     happy_end(adr-bin_wd/2., adr+bin_wd/2.);
     termint(0);
