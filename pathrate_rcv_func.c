@@ -68,7 +68,7 @@ double get_kurtosis(double* bell_array, int size){
 }
 
 void prntmsg(FILE *fp) {
-  fprintf(fp, "%s", message);
+  fprintf(fp, "%.*s", 1024, message);
   fflush(fp);
 }
 
