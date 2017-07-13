@@ -172,7 +172,7 @@ int main(int argc, char* argv[])
   }
   if (errflg || !gothostname) {
     if (!gothostname) fprintf(stderr,"Need to specify sender's hostname!\n");
-    (void)fprintf(stderr, "usage: pathrate_rcv [-H|-h] [-Q] [-q|-v] [-o|-O <filename>]\
+    (void)fprintf(stderr, "usage: pathrate_rcv [-H|-h] [-Q] [-q|-v]\
  [-N <filename>] -s <sender>\n");
     exit (-1);
   }

@@ -68,8 +68,10 @@ double get_kurtosis(double* bell_array, int size){
 }
 
 void prntmsg(FILE *fp) {
-  fprintf(fp, "%.*s", 1024, message);
-  fflush(fp);
+  if (fp != NULL) {
+    fprintf(fp, "%.*s", 1024, message);
+    fflush(fp);
+  }
 }
 
 /*
@@ -130,22 +132,13 @@ void termint(int exit_code) {
   send_ctr_msg(ctr_code);
   ctr_code = GAME_OVER;
   send_ctr_msg(ctr_code);
-  fclose(pathrate_fp); close(sock_tcp); close(sock_udp);
+  close(sock_tcp); close(sock_udp);
   exit(exit_code);
 }
 
 /* Successful termination. Print result.  */
 void happy_end(double bw_lo, double bw_hi)
 {
-  sprintf(message,"\n\n-------------------------------------------------\n");
-  prntmsg(pathrate_fp);
-  sprintf(message,"Final capacity estimate : ");prntmsg(pathrate_fp);
-  print_bw(pathrate_fp, bw_lo);
-  sprintf(message," to ");prntmsg(pathrate_fp);
-  print_bw(pathrate_fp, bw_hi);
-  sprintf(message,"\n");prntmsg(pathrate_fp);
-  sprintf(message,"-------------------------------------------------\n\n");
-  prntmsg(pathrate_fp);
   if(verbose){
     fprintf(stdout,"-------------------------------------------------\nFinal capacity estimate : ");
     print_bw(stdout,bw_lo);
@@ -505,29 +498,23 @@ double get_mode(double ord_data[], short vld_data[],
   /* Report mode characteristics */
   if (curr_mode->mode_cnt > BIN_NOISE)
   {
-    sprintf(message,"\t* Mode:"); prntmsg(pathrate_fp);
     if (verbose) prntmsg(stdout);
-    print_bw(pathrate_fp, mode_lo);
     if (verbose) print_bw(stdout, mode_lo);
-    sprintf(message,"to"); prntmsg(pathrate_fp);
     if (verbose) prntmsg(stdout);
-    print_bw(pathrate_fp, mode_hi);
     if (verbose) print_bw(stdout, mode_hi);
     sprintf(message," - %ld measurements\n\t  Modal bell: %ld measurements - low :",
-            curr_mode->mode_cnt, curr_mode->bell_cnt); prntmsg(pathrate_fp);
+            curr_mode->mode_cnt, curr_mode->bell_cnt);
     if (verbose) prntmsg(stdout);
-    print_bw(pathrate_fp, curr_mode->bell_lo);
     if (verbose) print_bw(stdout, curr_mode->bell_lo);
-    sprintf(message,"- high :"); prntmsg(pathrate_fp);
+    sprintf(message,"- high :");
     if (verbose) prntmsg(stdout);
-    print_bw(pathrate_fp, curr_mode->bell_hi);
     if (verbose) print_bw(stdout, curr_mode->bell_hi);
-    sprintf(message,"\n");prntmsg(pathrate_fp);
+    sprintf(message,"\n");
     if (verbose) prntmsg(stdout);
     /* Weiling: calculate bell_kurtosis*/
     curr_mode->bell_kurtosis = get_kurtosis(ord_data + bell_lo_ind , bell_hi_ind - bell_lo_ind + 1);
     if(curr_mode->bell_kurtosis == -99999){
-      sprintf(message, "\nWarning!!! bell_kurtosis == -99999\n"); prntmsg(pathrate_fp);
+      sprintf(message, "\nWarning!!! bell_kurtosis == -99999\n");
       if (verbose) prntmsg(stdout);
       return UNIMPORTANT_MODE;
     }
@@ -710,7 +697,6 @@ int gig_path(int pack_sz, int round, int k_to_u_latency){
   double cap[300],ord_cap[300];
 
   sprintf(message,"Test with Interrupt Coalesence\n  %d Trains of length: %d \n", no_of_trains, train_len);
-  prntmsg(pathrate_fp);
   if(Verbose) prntmsg(stdout);
   for (j=0; j<no_of_trains; j++){
     int disps[300];
@@ -720,7 +706,6 @@ int gig_path(int pack_sz, int round, int k_to_u_latency){
     double tmp_cap, adr;
 
     sprintf(message,"  Train id: %d -> \n\t", j);
-    prntmsg(pathrate_fp);
     if(Verbose) prntmsg(stdout);
     ctr_code = TRAIN_LEN | (train_len<<8);
     send_ctr_msg(ctr_code);
@@ -735,13 +720,10 @@ int gig_path(int pack_sz, int round, int k_to_u_latency){
       train_len-=20;
       sprintf(message,"Reducing train size to %d\n", train_len);
       //sprintf(message,"\n");
-      prntmsg(pathrate_fp);
       if(Verbose) prntmsg(stdout);
       if (train_len < 100 && est < 5) {
         printf("Insufficient number of packet dispersion estimates.\n");
-        fprintf(pathrate_fp,"Insufficient number of packet dispersion estimates.\n");
         printf("Probably a 1000Mbps path.\n");
-        fprintf(pathrate_fp,"Probably a 1000Mbps path.\n");
         termint(-1);
       }
     }
@@ -767,15 +749,12 @@ int gig_path(int pack_sz, int round, int k_to_u_latency){
           (time_to_us_delta(pkt_time[id[i]], pkt_time[id[i+1]]));
         if (tmp_cap >= .9*adr) {
           cap[est]=tmp_cap;
-          print_bw(pathrate_fp, cap[est++]);
           if (Verbose) print_bw(stdout, cap[est-1]);
           sprintf(message,"\n\t");
-          prntmsg(pathrate_fp);
           if(Verbose) prntmsg(stdout);
         }
       }
       sprintf(message, "Number of jump detected = %d\n", k);
-      prntmsg(pathrate_fp);
       if (Verbose) prntmsg(stdout);
     }
   }
@@ -786,9 +765,7 @@ int gig_path(int pack_sz, int round, int k_to_u_latency){
   }
   else {
     printf("Insufficient number %d of packet dispersion estimates.\n", est);
-    fprintf(pathrate_fp,"Insufficient number of packet dispersion estimates.\n");
     printf("Probably a 1000Mbps path.\n");
-    fprintf(pathrate_fp,"Probably a 1000Mbps path.\n");
     termint(-1);
   }
 

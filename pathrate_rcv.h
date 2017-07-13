@@ -20,10 +20,10 @@
    pathrate : an end-to-end capcity estimation tool
    Author   : Constantinos Dovrolis (dovrolis@cc.gatech.edu )
               Ravi S Prasad            ( ravi@cc.gatech.edu )
-              
+
    Release  : Ver 2.4.1
    Support  : This work was supported by the SciDAC
-              program of the US department 
+              program of the US department
 --------------------------------------------------*/
 
 
@@ -37,8 +37,8 @@
 #define  MAX_IGNORED_MSRMS	0.3
 #define  IGNORE_LIM_FACTOR	4
 
-#define  MIN_PACK_SZ_P1		572 
-#define  SIZE_INCR_STEP	 	25	
+#define  MIN_PACK_SZ_P1		572
+#define  SIZE_INCR_STEP	 	25
 
 #define  NO_TRAINS_P1		1000
 #define  NO_TRAINS_P2		500
@@ -47,13 +47,12 @@
 #define  ADR_REDCT_THR 		0.90
 
 #define  BIN_NOISE	   	15
-#define  BIN_CNT_TOLER		5	
+#define  BIN_CNT_TOLER		5
 #define  MAX_NO_MODES	 	1000
 
 EXTERN int sock_tcp, sock_udp;
 EXTERN char message[1024];
-EXTERN FILE *pathrate_fp;	
-EXTERN FILE *netlog_fp;	
+EXTERN FILE *netlog_fp;
 EXTERN int netlog;
 EXTERN char hostname[256];
 EXTERN int recv_train_done;
@@ -72,7 +71,7 @@ EXTERN void order(double unord_arr[], double ord_arr[], long no_elems);
 EXTERN double get_avg(double data[], long no_values);
 EXTERN double get_std(double data[], long no_values);
 /*Weiling: *bell_kurtosis*/
-EXTERN double get_mode(double ord_data[], short vld_data[], double bin_wd, 
+EXTERN double get_mode(double ord_data[], short vld_data[], double bin_wd,
        int no_values, mode_struct *curr_mode);
 EXTERN void sig_alrm(int signo);
 EXTERN void *ctr_listen(void *arg);
