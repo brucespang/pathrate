@@ -20,32 +20,32 @@
    pathrate : an end-to-end capcity estimation tool
    Author   : Constantinos Dovrolis (dovrolis@cc.gatech.edu )
               Ravi S Prasad            ( ravi@cc.gatech.edu )
-              
+
    Release  : Ver 2.4.1
    Support  : This work was supported by the SciDAC
-              program of the US department 
+              program of the US department
 --------------------------------------------------*/
 
 
 #include "pathrate.h"
 #include "pathrate_snd.h"
 
-/* 
-	Receive a message from the control stream 
+/*
+	Receive a message from the control stream
 */
-long recv_ctr_msg(int ctr_strm, char *ctr_buff) 
-{ 
+long recv_ctr_msg(int ctr_strm, char *ctr_buff)
+{
 	long ctr_code;
-  if (read(ctr_strm, ctr_buff, sizeof(long)) != sizeof(long)) 
+  if (read(ctr_strm, ctr_buff, sizeof(long)) != sizeof(long))
 	  return(-1);
-	memcpy(&ctr_code, ctr_buff, sizeof(long)); 
+	memcpy(&ctr_code, ctr_buff, sizeof(long));
 	return(ntohl(ctr_code));
 }
 
 /*
     Send an empty message to the control stream
 */
-void send_ctr_msg(int ctr_strm, long ctr_code) 
+void send_ctr_msg(int ctr_strm, long ctr_code)
 {
   char ctr_buff[8];
   long ctr_code_n = htonl(ctr_code);
@@ -71,9 +71,7 @@ double time_to_us_delta(struct timeval tv1, struct timeval tv2)
  *  */
 void help(){
   fprintf (stderr,"pathrate_snd options\n");
-  fprintf (stderr,"-i        : iterative mode\n");
-  fprintf (stderr,"-q        : quite mode\n");
+  fprintf (stderr,"-q        : quiet mode\n");
   fprintf (stderr,"-v        : verbose mode\n");
-  fprintf (stderr,"-o <file> : print log in file\n");
   fprintf (stderr,"-H|-h     : print this help and exit\n");
 }

@@ -83,10 +83,6 @@ int main(int argc, char* argv[])
     case 'v':
       Verbose=1;
       break;
-    case 'o':
-      file=1;
-      strcpy(filename,optarg);
-      break;
     case 'h':
       help() ;
       errflg++;
@@ -99,7 +95,7 @@ int main(int argc, char* argv[])
       errflg++;
   }
   if (errflg) {
-    (void)fprintf(stderr, "usage: pathrate_snd [-i] [-H|-h] [-q|-v] [-o <filename>] \n");
+    (void)fprintf(stderr, "usage: pathrate_snd [-H|-h] [-q|-v]\n");
     exit (-1);
   }
   if (file){
